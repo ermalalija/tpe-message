@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  gmail-whatsapp-bridge:
+    build: .
+    container_name: gmail-whatsapp-bridge
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./credentials:/app/credentials
+      - ./config.db:/app/config.db
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s 
