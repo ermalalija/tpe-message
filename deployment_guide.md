@@ -167,6 +167,185 @@ heroku config:set ADMIN_USERNAME=ErmalAlija
 heroku config:set ADMIN_PASSWORD=Prishtina1997!
 ```
 
+## 🌐 Domain Setup for EC2 Instance
+
+### Step 1: Register a Domain Name
+
+#### Option A: AWS Route 53 (Recommended)
+1. **Go to Route 53 Console**:
+   - AWS Console → Route 53 → Registered domains
+   - Click "Register Domain"
+
+2. **Search for Domain**:
+   - Enter your desired domain name
+   - Choose from available options
+   - Select domain extension (.com, .net, etc.)
+
+3. **Complete Registration**:
+   - Fill in contact information
+   - Choose registration period (1-10 years)
+   - Complete payment
+
+#### Option B: External Domain Registrar
+- **Popular Options**: GoDaddy, Namecheap, Google Domains
+- Register your domain and note the nameservers
+- You'll configure DNS records in the next step
+
+### Step 2: Configure DNS Records
+
+#### For AWS Route 53:
+1. **Create Hosted Zone**:
+   - Route 53 → Hosted zones
+   - Click "Create hosted zone"
+   - Enter your domain name
+   - Click "Create"
+
+2. **Create A Record**:
+   - Click on your hosted zone
+   - Click "Create record"
+   - **Record type**: A
+   - **Record name**: Leave blank (for root domain) or enter subdomain
+   - **Value**: Your EC2 instance's **Elastic IP** (recommended) or public IP
+   - **TTL**: 300 seconds
+   - Click "Create records"
+
+3. **Create CNAME Record (Optional for www)**:
+   - Click "Create record"
+   - **Record type**: CNAME
+   - **Record name**: www
+   - **Value**: your-domain.com
+   - **TTL**: 300 seconds
+   - Click "Create records"
+
+#### For External Domain Registrars:
+1. **Get Nameservers from Route 53**:
+   - Create hosted zone in Route 53
+   - Note the 4 nameservers provided
+
+2. **Update Nameservers**:
+   - Go to your domain registrar's DNS settings
+   - Replace existing nameservers with Route 53 nameservers
+   - Save changes
+
+3. **Create A Record in Route 53**:
+   - Follow steps above for creating A record
+
+### Step 3: Set Up Elastic IP (Recommended)
+
+1. **Allocate Elastic IP**:
+   - EC2 Console → Elastic IPs
+   - Click "Allocate Elastic IP address"
+   - Click "Allocate"
+
+2. **Associate with Instance**:
+   - Select your Elastic IP
+   - Click "Actions" → "Associate Elastic IP address"
+   - Select your EC2 instance
+   - Click "Associate"
+
+3. **Update DNS Record**:
+   - Go back to Route 53
+   - Update your A record with the Elastic IP address
+
+### Step 4: Configure Nginx
+
+1. **Update Nginx Configuration**:
+```bash
+sudo nano /etc/nginx/sites-available/gmail-whatsapp-bridge
+```
+
+Replace `your-domain.com` with your actual domain:
+```nginx
+server {
+    listen 80;
+    server_name your-actual-domain.com;
+
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+2. **Test and Reload Nginx**:
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Step 5: Install SSL Certificate
+
+1. **Install Certbot**:
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+2. **Obtain SSL Certificate**:
+```bash
+sudo certbot --nginx -d your-actual-domain.com
+```
+
+3. **Test Auto-Renewal**:
+```bash
+sudo certbot renew --dry-run
+```
+
+### Step 6: Update Twilio Webhook
+
+1. **Get Your Webhook URL**:
+   - Your webhook URL will be: `https://your-actual-domain.com/twilio-webhook`
+
+2. **Update Twilio Console**:
+   - Go to Twilio Console → Messaging → Settings → WhatsApp Sandbox
+   - Set webhook URL to your new HTTPS URL
+   - Method: POST
+   - Save changes
+
+### Step 7: Test Your Setup
+
+1. **Test Domain Resolution**:
+```bash
+# From your local machine
+nslookup your-actual-domain.com
+ping your-actual-domain.com
+```
+
+2. **Test HTTPS Access**:
+   - Open browser: `https://your-actual-domain.com`
+   - Should redirect to HTTPS automatically
+   - Verify SSL certificate is valid
+
+3. **Test Twilio Webhook**:
+   - Send a WhatsApp message to your Twilio number
+   - Check if webhook receives the message
+   - Verify in your application logs
+
+### DNS Propagation Time
+
+- **Initial Setup**: 5-30 minutes
+- **Full Propagation**: Up to 48 hours
+- **Testing**: Use `dig` or `nslookup` to check propagation
+
+### Troubleshooting Domain Issues
+
+1. **Domain Not Resolving**:
+   - Check DNS records are correct
+   - Verify nameservers are updated
+   - Wait for propagation (up to 48 hours)
+
+2. **SSL Certificate Issues**:
+   - Ensure domain resolves to your server
+   - Check firewall allows port 80/443
+   - Verify Nginx configuration
+
+3. **Twilio Webhook Fails**:
+   - Ensure HTTPS URL is accessible
+   - Check SSL certificate is valid
+   - Verify webhook endpoint responds correctly
+
 ## 🔧 Configuration Steps
 
 ### Step 1: Google Cloud Console Setup

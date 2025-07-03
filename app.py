@@ -155,6 +155,11 @@ def logout():
     session.pop('authenticated', None)
     return redirect(url_for('login'))
 
+@app.route('/health')
+def health():
+    """Health check endpoint for Docker"""
+    return {'status': 'healthy', 'message': 'Gmail-to-WhatsApp Bridge is running'}, 200
+
 @app.route('/')
 @login_required
 def index():
@@ -291,4 +296,4 @@ def send_gmail_reply(thread_id, message_body):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=False, host='0.0.0.0', port=5000) 
