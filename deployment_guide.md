@@ -74,7 +74,7 @@ ssh -i your-key.pem ubuntu@your-ec2-ip
 sudo apt update && sudo apt upgrade -y
 
 # Install Docker (Ubuntu 22.04 method)
-sudo apt install docker.io docker-compose-plugin -y
+sudo apt install docker.io docker-compose -y
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker ubuntu
@@ -91,11 +91,11 @@ git clone <your-repo-url>
 cd gmail-whatsapp-bridge
 
 # Build and run
-docker compose up -d
+docker-compose up -d
 
 # Check status
-docker compose ps
-docker compose logs
+docker-compose ps
+docker-compose logs
 ```
 
 #### Step 4: Configure Domain and SSL

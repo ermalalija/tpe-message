@@ -15,23 +15,22 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy all application files
 COPY . .
 
-# Create credentials directory
-RUN mkdir -p credentials
+# Create credentials directory and set permissions
+RUN mkdir -p credentials && \
+    chmod +x start.sh
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app && \
     chown -R app:app /app
+
+# Switch to non-root user
 USER app
 
 # Expose port
 EXPOSE 5000
-
-# Copy startup script
-COPY start.sh .
-RUN chmod +x start.sh
 
 # Start the application
 CMD ["./start.sh"] 
